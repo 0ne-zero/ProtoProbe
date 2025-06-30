@@ -1,6 +1,6 @@
 # ProtoProbe
 
-ProtoProbe is a modular Go tool to test and measure the connectivity and performance of key internet protocols.  
+ProtoProbe is a modular extendable Go tool to test and measure the connectivity of internet protocols.  
 Designed for environments with network censorship, it helps check which protocols work and gather stats like RTT and packet loss.
 
 ---
@@ -13,8 +13,6 @@ Designed for environments with network censorship, it helps check which protocol
 - DNS over TLS (DoT)
 - DNS over HTTPS (DoH)
 - WebSocket
-
-Each test is modular and easy to extend.
 
 ---
 

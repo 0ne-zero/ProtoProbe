@@ -8,8 +8,8 @@ Designed for environments with network censorship, it helps check which protocol
 ## Features
 - ICMP (ping)
 - TCP
-- UDP
-- DNS over UDP (Plain DNS)
+- DNS over UDP (Normal DNS)
+- DNS over TCP
 - DNS over TLS (DoT)
 - DNS over HTTPS (DoH)
 - WebSocket

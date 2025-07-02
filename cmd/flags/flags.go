@@ -7,6 +7,11 @@ import (
 
 const DefaultConfigFilePath = "config.json"
 
+var (
+	ErrorNoFlags         = fmt.Errorf("error: there should be at least one flag")
+	errorALLFlagConflict = fmt.Errorf("error: -a cannot be used together with individual protocol flags")
+)
+
 type Options struct {
 	ConfigFilePath string
 	All            bool
@@ -19,7 +24,7 @@ type Options struct {
 	WebSocket      bool
 }
 
-func ParseFlags() (*Options, error) {
+func ParseFlags() (Options, error) {
 	var opts Options
 	flag.StringVar(&opts.ConfigFilePath, "config", DefaultConfigFilePath, "Path to config file")
 	flag.BoolVar(&opts.All, "all", false, "Test all protocols")
@@ -35,8 +40,13 @@ func ParseFlags() (*Options, error) {
 
 	// Validate: -a cannot be used with other protocol flags
 	if opts.All && (opts.ICMP || opts.TCP || opts.DoUDP || opts.DoTCP || opts.DoT || opts.DoH || opts.WebSocket) {
-		return nil, fmt.Errorf("error: -a cannot be used together with individual protocol flags")
+		return opts, errorALLFlagConflict
 	}
 
-	return &opts, nil
+	// Validate: at least one flag should be there
+	if !opts.All && !opts.ICMP && !opts.TCP && !opts.DoUDP && !opts.DoTCP && !opts.DoT || !opts.DoH || !opts.WebSocket {
+		return opts, ErrorNoFlags
+	}
+
+	return opts, nil
 }

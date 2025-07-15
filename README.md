@@ -60,3 +60,32 @@ Usage of protoprobe:
   -websocket
         Test WebSocket
 ```
+---
+## Example output
+```bash
+./protoprobe -all 
+
+ICMP:
+2025/07/15 20:22:57 [ICMP] | 8.8.8.8 | avg-rtt: 75ms | packet-loss: 0.00% ✅
+2025/07/15 20:22:57 [ICMP] | 1.1.1.1 | avg-rtt: 135ms | packet-loss: 0.00% ✅
+
+TCP:
+2025/07/15 20:22:58 [TCP] | google.com:443 | rtt: 273ms ✅
+
+Dns over UDP:
+2025/07/15 20:22:58 [DNS/UDP] | 8.8.8.8:53 | rtt: 68ms ✅
+2025/07/15 20:22:58 [DNS/UDP] | 1.1.1.1:53 | rtt: 141ms ✅
+
+Dns over TCP:
+2025/07/15 20:23:00 [DNS/TCP] | 8.8.8.8:53 | EOF ❌
+2025/07/15 20:23:06 [DNS/TCP] | 1.1.1.1:53 | read tcp 192.168.1.2:46330->1.1.1.1:53: i/o timeout ❌
+
+DoT:
+2025/07/15 20:23:14 [DNS/TLS (DoT)] | 1.1.1.1:853 | context deadline exceeded ❌
+
+DoH:
+2025/07/15 20:23:15 [DNS/HTTPS (DoH)] | https://cloudflare-dns.com/dns-query | rtt: 723ms ✅
+
+WebSocket:
+[WebSocket] | wss://echo.websocket.events | rtt: 921.0533ms ✅
+```

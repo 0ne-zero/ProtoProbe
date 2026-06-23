@@ -22,7 +22,9 @@ type Options struct {
 	DoT            bool
 	DoH            bool
 	WebSocket      bool
+	QUIC           bool
 	DoTInsecure    bool // skip TLS certificate verification for DoT
+	QUICInsecure   bool // skip TLS certificate verification for QUIC
 	JSON           bool // emit results as JSON instead of human-readable text
 }
 
@@ -38,17 +40,19 @@ func ParseFlags() (Options, error) {
 	flag.BoolVar(&opts.DoTInsecure, "dot-insecure", false, "Skip TLS certificate verification for DoT")
 	flag.BoolVar(&opts.DoH, "doh", false, "Test DNS over HTTPS")
 	flag.BoolVar(&opts.WebSocket, "websocket", false, "Test WebSocket")
+	flag.BoolVar(&opts.QUIC, "quic", false, "Test QUIC (HTTP/3 handshake)")
+	flag.BoolVar(&opts.QUICInsecure, "quic-insecure", false, "Skip TLS certificate verification for QUIC")
 	flag.BoolVar(&opts.JSON, "json", false, "Output results as JSON")
 
 	flag.Parse()
 
-	// Validate: -a cannot be used with other protocol flags
-	if opts.All && (opts.ICMP || opts.TCP || opts.DoUDP || opts.DoTCP || opts.DoT || opts.DoH || opts.WebSocket) {
+	// Validate: -all cannot be used with other protocol flags
+	if opts.All && (opts.ICMP || opts.TCP || opts.DoUDP || opts.DoTCP || opts.DoT || opts.DoH || opts.WebSocket || opts.QUIC) {
 		return opts, errorALLFlagConflict
 	}
 
-	// Validate: at least one flag should be there
-	if !opts.All && !opts.ICMP && !opts.TCP && !opts.DoUDP && !opts.DoTCP && !opts.DoT || !opts.DoH || !opts.WebSocket {
+	// Validate: at least one protocol flag must be present
+	if !opts.All && !opts.ICMP && !opts.TCP && !opts.DoUDP && !opts.DoTCP && !opts.DoT && !opts.DoH && !opts.WebSocket && !opts.QUIC {
 		return opts, ErrorNoFlags
 	}
 

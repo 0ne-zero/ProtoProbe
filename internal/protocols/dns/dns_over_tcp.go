@@ -13,7 +13,7 @@ type DNSOverTCPResult struct {
 	RTT time.Duration
 }
 
-func TestDNSTCP(dnsRequest *config.DNS_Host_Port_Query) (*DNSOverTCPResult, error) {
+func TestDNSTCP(dnsRequest *config.HostPortQuery) (*DNSOverTCPResult, error) {
 	m := new(dns.Msg)
 	m.SetQuestion(fmt.Sprintf("%s.", dnsRequest.Query), dns.TypeA)
 	c := new(dns.Client)

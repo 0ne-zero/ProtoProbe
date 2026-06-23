@@ -6,30 +6,38 @@ import (
 )
 
 type Config struct {
-	ICMPHost          []string              `json:"icmp"`
-	TCPHostPort       []DNS_Host_Port_Query `json:"tcp"`
-	NormalDNSHostPort []DNS_Host_Port_Query `json:"dns"`       // Both DNS over UDP and DNS over TCP server address (with query)
-	DoT               []DNS_Host_Port_Query `json:"dot"`       // DNS over TLS server addres (with query)
-	DoH               []DNS_URL_Query       `json:"doh"`       // DNS over HTTPS server address (with query)
-	WebSocket         []string              `json:"websocket"` // Used for websocker server address
+	ICMP      []string        `json:"icmp"`
+	TCP       []HostPort      `json:"tcp"`
+	DNS       []HostPortQuery `json:"dns"`
+	DoT       []HostPortQuery `json:"dot"`
+	DoH       []URLQuery      `json:"doh"`
+	WebSocket []string        `json:"websocket"`
+	QUIC      []HostPort      `json:"quic"`
 }
 
-type DNS_Host_Port_Query struct {
-	Host  string `json:"host"`
-	Port  int    `json:"port"`
+type HostPort struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+type HostPortQuery struct {
+	HostPort
 	Query string `json:"query"`
 }
-type DNS_URL_Query struct {
-	Addr  string `json:"address"`
+
+type URLQuery struct {
+	URL   string `json:"address"`
 	Query string `json:"query"`
 }
 
 func LoadConfig(path string) (*Config, error) {
-	file, err := os.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	var cfg Config
-	err = json.Unmarshal(file, &cfg)
-	return &cfg, err
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
 }

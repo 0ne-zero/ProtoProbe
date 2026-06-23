@@ -42,17 +42,6 @@ func main() {
 		allResults = append(allResults, results...)
 	}
 
-	if opts.All || opts.TCP {
-		if !opts.JSON {
-			printHeader("TCP")
-		}
-		results := runTCPTest(cfg)
-		if !opts.JSON {
-			printHuman(results)
-		}
-		allResults = append(allResults, results...)
-	}
-
 	if opts.All || opts.DoUDP {
 		if !opts.JSON {
 			printHeader("Dns over UDP")
@@ -69,6 +58,17 @@ func main() {
 			printHeader("Dns over TCP")
 		}
 		results := runDnsOverTCPTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
+	if opts.All || opts.TCP {
+		if !opts.JSON {
+			printHeader("TCP")
+		}
+		results := runTCPTest(cfg)
 		if !opts.JSON {
 			printHuman(results)
 		}
@@ -97,6 +97,17 @@ func main() {
 		allResults = append(allResults, results...)
 	}
 
+	if opts.All || opts.QUIC {
+		if !opts.JSON {
+			printHeader("QUIC")
+		}
+		results := runQUICTest(cfg, opts.QUICInsecure)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
 	if opts.All || opts.WebSocket {
 		if !opts.JSON {
 			printHeader("WebSocket")
@@ -117,7 +128,7 @@ func runICMPTest(cfg *config.Config) []ProbeResult {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var results []ProbeResult
-	for _, host := range cfg.ICMPHost {
+	for _, host := range cfg.ICMP {
 		wg.Add(1)
 		go func(h string) {
 			defer wg.Done()
@@ -143,9 +154,9 @@ func runTCPTest(cfg *config.Config) []ProbeResult {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var results []ProbeResult
-	for _, hp := range cfg.TCPHostPort {
+	for _, hp := range cfg.TCP {
 		wg.Add(1)
-		go func(hp config.DNS_Host_Port_Query) {
+		go func(hp config.HostPort) {
 			defer wg.Done()
 			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
 			r := ProbeResult{Protocol: "TCP", Target: target}
@@ -169,9 +180,9 @@ func runDnsOverUDPTest(cfg *config.Config) []ProbeResult {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var results []ProbeResult
-	for _, hp := range cfg.NormalDNSHostPort {
+	for _, hp := range cfg.DNS {
 		wg.Add(1)
-		go func(hp config.DNS_Host_Port_Query) {
+		go func(hp config.HostPortQuery) {
 			defer wg.Done()
 			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
 			r := ProbeResult{Protocol: "DNS/UDP", Target: target}
@@ -195,9 +206,9 @@ func runDnsOverTCPTest(cfg *config.Config) []ProbeResult {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	var results []ProbeResult
-	for _, hp := range cfg.NormalDNSHostPort {
+	for _, hp := range cfg.DNS {
 		wg.Add(1)
-		go func(hp config.DNS_Host_Port_Query) {
+		go func(hp config.HostPortQuery) {
 			defer wg.Done()
 			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
 			r := ProbeResult{Protocol: "DNS/TCP", Target: target}
@@ -223,7 +234,7 @@ func runDoTTest(cfg *config.Config, insecureSkipVerify bool) []ProbeResult {
 	var results []ProbeResult
 	for _, hp := range cfg.DoT {
 		wg.Add(1)
-		go func(hp config.DNS_Host_Port_Query) {
+		go func(hp config.HostPortQuery) {
 			defer wg.Done()
 			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
 			r := ProbeResult{Protocol: "DNS/TLS (DoT)", Target: target}
@@ -249,9 +260,9 @@ func runDoHTest(cfg *config.Config) []ProbeResult {
 	var results []ProbeResult
 	for _, uq := range cfg.DoH {
 		wg.Add(1)
-		go func(uq config.DNS_URL_Query) {
+		go func(uq config.URLQuery) {
 			defer wg.Done()
-			r := ProbeResult{Protocol: "DNS/HTTPS (DoH)", Target: uq.Addr}
+			r := ProbeResult{Protocol: "DNS/HTTPS (DoH)", Target: uq.URL}
 			res, err := dns.TestDoH(&uq)
 			if err != nil {
 				r.Error = err.Error()
@@ -288,6 +299,32 @@ func runWebSocketTest(cfg *config.Config) []ProbeResult {
 			results = append(results, r)
 			mu.Unlock()
 		}(server)
+	}
+	wg.Wait()
+	return results
+}
+
+func runQUICTest(cfg *config.Config, insecureSkipVerify bool) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.QUIC {
+		wg.Add(1)
+		go func(hp config.HostPort) {
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "QUIC", Target: target}
+			res, err := protocols.TestQUIC(&hp, insecureSkipVerify)
+			if err != nil {
+				r.Error = err.Error()
+			} else {
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
+			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
 	}
 	wg.Wait()
 	return results

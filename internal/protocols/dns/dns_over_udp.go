@@ -13,7 +13,7 @@ type DNSResult struct {
 	RTT time.Duration
 }
 
-func TestDnsOverUDP(dnsRequest *config.DNS_Host_Port_Query) (*DNSResult, error) {
+func TestDnsOverUDP(dnsRequest *config.HostPortQuery) (*DNSResult, error) {
 	m := new(dns.Msg)
 	m.SetQuestion(fmt.Sprintf("%s.", dnsRequest.Query), dns.TypeA)
 	c := new(dns.Client)

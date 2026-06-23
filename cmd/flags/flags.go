@@ -23,6 +23,7 @@ type Options struct {
 	DoH            bool
 	WebSocket      bool
 	DoTInsecure    bool // skip TLS certificate verification for DoT
+	JSON           bool // emit results as JSON instead of human-readable text
 }
 
 func ParseFlags() (Options, error) {
@@ -37,6 +38,7 @@ func ParseFlags() (Options, error) {
 	flag.BoolVar(&opts.DoTInsecure, "dot-insecure", false, "Skip TLS certificate verification for DoT")
 	flag.BoolVar(&opts.DoH, "doh", false, "Test DNS over HTTPS")
 	flag.BoolVar(&opts.WebSocket, "websocket", false, "Test WebSocket")
+	flag.BoolVar(&opts.JSON, "json", false, "Output results as JSON")
 
 	flag.Parse()
 

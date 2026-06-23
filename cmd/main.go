@@ -3,10 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
+	"net"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/0ne-zero/ProtoProbe/cmd/flags"
 	"github.com/0ne-zero/ProtoProbe/config"
@@ -30,159 +29,268 @@ func main() {
 		os.Exit(1)
 	}
 
+	var allResults []ProbeResult
+
 	if opts.All || opts.ICMP {
-		printHeader("ICMP")
-		runICMPTest(cfg)
+		if !opts.JSON {
+			printHeader("ICMP")
+		}
+		results := runICMPTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
 	}
 
 	if opts.All || opts.TCP {
-		printHeader("TCP")
-		runTCPTest(cfg)
+		if !opts.JSON {
+			printHeader("TCP")
+		}
+		results := runTCPTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
 	}
 
 	if opts.All || opts.DoUDP {
-		printHeader("Dns over UDP")
-		runDnsOverUDPTest(cfg)
+		if !opts.JSON {
+			printHeader("Dns over UDP")
+		}
+		results := runDnsOverUDPTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
 	}
 
 	if opts.All || opts.DoTCP {
-		printHeader("Dns over TCP")
-		runDnsOverTCPTest(cfg)
+		if !opts.JSON {
+			printHeader("Dns over TCP")
+		}
+		results := runDnsOverTCPTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
 	}
 
 	if opts.All || opts.DoT {
-		printHeader("DoT")
-		runDoTTest(cfg, opts.DoTInsecure)
+		if !opts.JSON {
+			printHeader("DoT")
+		}
+		results := runDoTTest(cfg, opts.DoTInsecure)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
 	}
 
 	if opts.All || opts.DoH {
-		printHeader("DoH")
-		runDoHTest(cfg)
+		if !opts.JSON {
+			printHeader("DoH")
+		}
+		results := runDoHTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
 	}
 
 	if opts.All || opts.WebSocket {
-		printHeader("WebSocket")
-		runWebSocketTest(cfg)
+		if !opts.JSON {
+			printHeader("WebSocket")
+		}
+		results := runWebSocketTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
+	if opts.JSON {
+		printJSON(allResults)
 	}
 }
 
-func runICMPTest(cfg *config.Config) {
-	var icmpWg sync.WaitGroup
+func runICMPTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
 	for _, host := range cfg.ICMPHost {
-		icmpWg.Add(1)
+		wg.Add(1)
 		go func(h string) {
-			defer icmpWg.Done()
+			defer wg.Done()
+			r := ProbeResult{Protocol: "ICMP", Target: h}
 			res, err := protocols.TestICMP(h)
 			if err != nil {
-				log.Printf("[ICMP] | %s | %v ❌\n", h, err)
+				r.Error = err.Error()
 			} else {
-				log.Printf("[ICMP] | %s | avg-rtt: %v | packet-loss: %.2f%% ✅\n", h, res.AvgRtt.Round(time.Millisecond), res.PacketLoss)
+				r.Success = true
+				r.RTTMs = rttMillis(res.AvgRtt)
+				r.PacketLoss = ptrFloat64(res.PacketLoss)
 			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
 		}(host)
 	}
-	icmpWg.Wait()
+	wg.Wait()
+	return results
 }
 
-func runTCPTest(cfg *config.Config) {
-	var tcpWg sync.WaitGroup
-	for _, hostPort := range cfg.TCPHostPort {
-		tcpWg.Add(1)
+func runTCPTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.TCPHostPort {
+		wg.Add(1)
 		go func(hp config.DNS_Host_Port_Query) {
-			defer tcpWg.Done()
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "TCP", Target: target}
 			res, err := protocols.TestTCP(hp)
 			if err != nil {
-				log.Printf("[TCP] | %s:%d | %v ❌\n", hp.Host, hp.Port, err)
+				r.Error = err.Error()
 			} else {
-				log.Printf("[TCP] | %s:%d | rtt: %v ✅\n", hp.Host, hp.Port, res.RTT.Round(time.Millisecond))
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
 			}
-		}(hostPort)
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
 	}
-	tcpWg.Wait()
+	wg.Wait()
+	return results
 }
 
-func runDnsOverUDPTest(cfg *config.Config) {
-	var dnsOverUDPWg sync.WaitGroup
-	for _, hostPort := range cfg.NormalDNSHostPort {
-		dnsOverUDPWg.Add(1)
+func runDnsOverUDPTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.NormalDNSHostPort {
+		wg.Add(1)
 		go func(hp config.DNS_Host_Port_Query) {
-			defer dnsOverUDPWg.Done()
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "DNS/UDP", Target: target}
 			res, err := dns.TestDnsOverUDP(&hp)
 			if err != nil {
-				log.Printf("[DNS/UDP] | %s:%d | %v ❌\n", hp.Host, hp.Port, err)
+				r.Error = err.Error()
 			} else {
-				log.Printf("[DNS/UDP] | %s:%d | rtt: %v ✅\n", hp.Host, hp.Port, res.RTT.Round(time.Millisecond))
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
 			}
-		}(hostPort)
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
 	}
-	dnsOverUDPWg.Wait()
+	wg.Wait()
+	return results
 }
 
-func runDnsOverTCPTest(cfg *config.Config) {
-	var dnsOverTCPWg sync.WaitGroup
-	for _, hostPort := range cfg.NormalDNSHostPort {
-		dnsOverTCPWg.Add(1)
+func runDnsOverTCPTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.NormalDNSHostPort {
+		wg.Add(1)
 		go func(hp config.DNS_Host_Port_Query) {
-			defer dnsOverTCPWg.Done()
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "DNS/TCP", Target: target}
 			res, err := dns.TestDNSTCP(&hp)
 			if err != nil {
-				log.Printf("[DNS/TCP] | %s:%d | %v ❌\n", hp.Host, hp.Port, err)
+				r.Error = err.Error()
 			} else {
-				log.Printf("[DNS/TCP] | %s:%d | rtt: %v ✅\n", hp.Host, hp.Port, res.RTT.Round(time.Millisecond))
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
 			}
-		}(hostPort)
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
 	}
-	dnsOverTCPWg.Wait()
+	wg.Wait()
+	return results
 }
 
-func runDoTTest(cfg *config.Config, insecureSkipVerify bool) {
-	var dnsOverTlsWg sync.WaitGroup
-	for _, hostPort := range cfg.DoT {
-		dnsOverTlsWg.Add(1)
+func runDoTTest(cfg *config.Config, insecureSkipVerify bool) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.DoT {
+		wg.Add(1)
 		go func(hp config.DNS_Host_Port_Query) {
-			defer dnsOverTlsWg.Done()
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "DNS/TLS (DoT)", Target: target}
 			res, err := dns.TestDoT(&hp, insecureSkipVerify)
 			if err != nil {
-				log.Printf("[DNS/TLS (DoT)] | %s:%d | %v ❌\n", hp.Host, hp.Port, err)
+				r.Error = err.Error()
 			} else {
-				log.Printf("[DNS/TLS (DoT)] | %s:%d | rtt: %v ✅\n", hp.Host, hp.Port, res.RTT.Round(time.Millisecond))
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
 			}
-		}(hostPort)
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
 	}
-	dnsOverTlsWg.Wait()
+	wg.Wait()
+	return results
 }
 
-func runDoHTest(cfg *config.Config) {
-	var dnsOverHttpsWg sync.WaitGroup
-	for _, urlQuery := range cfg.DoH {
-		dnsOverHttpsWg.Add(1)
-		go func(urlQuery config.DNS_URL_Query) {
-			defer dnsOverHttpsWg.Done()
-			res, err := dns.TestDoH(&urlQuery)
+func runDoHTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, uq := range cfg.DoH {
+		wg.Add(1)
+		go func(uq config.DNS_URL_Query) {
+			defer wg.Done()
+			r := ProbeResult{Protocol: "DNS/HTTPS (DoH)", Target: uq.Addr}
+			res, err := dns.TestDoH(&uq)
 			if err != nil {
-				log.Printf("[DNS/HTTPS (DoH)] | %s | %v ❌\n", urlQuery.Addr, err)
+				r.Error = err.Error()
 			} else {
-				log.Printf("[DNS/HTTPS (DoH)] | %s | rtt: %v ✅\n", urlQuery.Addr, res.RTT.Round(time.Millisecond))
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
 			}
-		}(urlQuery)
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(uq)
 	}
-	dnsOverHttpsWg.Wait()
+	wg.Wait()
+	return results
 }
 
-func runWebSocketTest(cfg *config.Config) {
-	var wsWg sync.WaitGroup
+func runWebSocketTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
 	for _, server := range cfg.WebSocket {
-		wsWg.Add(1)
+		wg.Add(1)
 		go func(s string) {
-			defer wsWg.Done()
-			ws, err := protocols.TestWebSocket(s)
+			defer wg.Done()
+			r := ProbeResult{Protocol: "WebSocket", Target: s}
+			res, err := protocols.TestWebSocket(s)
 			if err != nil {
-				log.Printf("[WebSocket] | %s | %v ❌\n", s, err)
+				r.Error = err.Error()
 			} else {
-				fmt.Printf("[WebSocket] | %s | rtt: %v ✅\n", s, ws.RTT)
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
 			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
 		}(server)
 	}
-	wsWg.Wait()
+	wg.Wait()
+	return results
 }
 
 func printHeader(proto string) {

@@ -14,12 +14,12 @@ type DoTResult struct {
 	RTT time.Duration
 }
 
-func TestDoT(dnsRequest *config.DNS_Host_Port_Query) (DoTResult, error) {
+func TestDoT(dnsRequest *config.DNS_Host_Port_Query, insecureSkipVerify bool) (DoTResult, error) {
 	m := new(dns.Msg)
 	m.SetQuestion(fmt.Sprintf("%s.", dnsRequest.Query), dns.TypeA)
 	c := new(dns.Client)
 	c.Net = "tcp-tls"
-	c.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	c.TLSConfig = &tls.Config{InsecureSkipVerify: insecureSkipVerify} //nolint:gosec
 	c.Timeout = timeout
 	start := time.Now()
 	serverAddr := net.JoinHostPort(dnsRequest.Host, fmt.Sprintf("%d", dnsRequest.Port))

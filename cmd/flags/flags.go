@@ -22,6 +22,7 @@ type Options struct {
 	DoT            bool
 	DoH            bool
 	WebSocket      bool
+	DoTInsecure    bool // skip TLS certificate verification for DoT
 }
 
 func ParseFlags() (Options, error) {
@@ -33,6 +34,7 @@ func ParseFlags() (Options, error) {
 	flag.BoolVar(&opts.DoUDP, "dou", false, "Test DNS over UDP")
 	flag.BoolVar(&opts.DoTCP, "dotcp", false, "Test DNS over TCP")
 	flag.BoolVar(&opts.DoT, "dot", false, "Test DNS over TLS")
+	flag.BoolVar(&opts.DoTInsecure, "dot-insecure", false, "Skip TLS certificate verification for DoT")
 	flag.BoolVar(&opts.DoH, "doh", false, "Test DNS over HTTPS")
 	flag.BoolVar(&opts.WebSocket, "websocket", false, "Test WebSocket")
 

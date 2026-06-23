@@ -52,7 +52,7 @@ func main() {
 
 	if opts.All || opts.DoT {
 		printHeader("DoT")
-		runDoTTest(cfg)
+		runDoTTest(cfg, opts.DoTInsecure)
 	}
 
 	if opts.All || opts.DoH {
@@ -134,13 +134,13 @@ func runDnsOverTCPTest(cfg *config.Config) {
 	dnsOverTCPWg.Wait()
 }
 
-func runDoTTest(cfg *config.Config) {
+func runDoTTest(cfg *config.Config, insecureSkipVerify bool) {
 	var dnsOverTlsWg sync.WaitGroup
 	for _, hostPort := range cfg.DoT {
 		dnsOverTlsWg.Add(1)
 		go func(hp config.DNS_Host_Port_Query) {
 			defer dnsOverTlsWg.Done()
-			res, err := dns.TestDoT(&hp)
+			res, err := dns.TestDoT(&hp, insecureSkipVerify)
 			if err != nil {
 				log.Printf("[DNS/TLS (DoT)] | %s:%d | %v ❌\n", hp.Host, hp.Port, err)
 			} else {

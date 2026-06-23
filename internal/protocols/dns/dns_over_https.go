@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/0ne-zero/ProtoProbe/config"
+	"github.com/0ne-zero/ProtoProbe/internal/config"
 	"github.com/miekg/dns"
 )
 
@@ -14,11 +14,11 @@ type DoHResult struct {
 	RTT time.Duration
 }
 
-func TestDoH(dnsRequest *config.DNS_URL_Query) (DoHResult, error) {
+func TestDoH(dnsRequest *config.URLQuery) (DoHResult, error) {
 	m := new(dns.Msg)
 	m.SetQuestion(fmt.Sprintf("%s.", dnsRequest.Query), dns.TypeA)
 	raw, _ := m.Pack()
-	req, _ := http.NewRequest("POST", dnsRequest.Addr, bytes.NewReader(raw))
+	req, _ := http.NewRequest("POST", dnsRequest.URL, bytes.NewReader(raw))
 	req.Header.Set("Content-Type", "application/dns-message")
 	client := &http.Client{Timeout: timeout}
 	start := time.Now()

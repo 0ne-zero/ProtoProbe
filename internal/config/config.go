@@ -8,11 +8,14 @@ import (
 type Config struct {
 	ICMP      []string        `json:"icmp"`
 	TCP       []HostPort      `json:"tcp"`
+	TLS       []HostPort      `json:"tls"`
 	DNS       []HostPortQuery `json:"dns"`
 	DoT       []HostPortQuery `json:"dot"`
 	DoH       []URLQuery      `json:"doh"`
-	WebSocket []string        `json:"websocket"`
+	HTTP      []string        `json:"http"`
+	HTTPS     []string        `json:"https"`
 	QUIC      []HostPort      `json:"quic"`
+	WebSocket []string        `json:"websocket"`
 }
 
 type HostPort struct {

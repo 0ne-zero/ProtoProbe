@@ -75,6 +75,17 @@ func main() {
 		allResults = append(allResults, results...)
 	}
 
+	if opts.All || opts.TLS {
+		if !opts.JSON {
+			printHeader("TLS")
+		}
+		results := runTLSTest(cfg, opts.TLSInsecure)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
 	if opts.All || opts.DoT {
 		if !opts.JSON {
 			printHeader("DoT")
@@ -91,6 +102,28 @@ func main() {
 			printHeader("DoH")
 		}
 		results := runDoHTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
+	if opts.All || opts.HTTP {
+		if !opts.JSON {
+			printHeader("HTTP")
+		}
+		results := runHTTPTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
+	if opts.All || opts.HTTPS {
+		if !opts.JSON {
+			printHeader("HTTPS")
+		}
+		results := runHTTPSTest(cfg)
 		if !opts.JSON {
 			printHuman(results)
 		}
@@ -325,6 +358,84 @@ func runQUICTest(cfg *config.Config, insecureSkipVerify bool) []ProbeResult {
 			results = append(results, r)
 			mu.Unlock()
 		}(hp)
+	}
+	wg.Wait()
+	return results
+}
+
+func runTLSTest(cfg *config.Config, insecureSkipVerify bool) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.TLS {
+		wg.Add(1)
+		go func(hp config.HostPort) {
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "TLS", Target: target}
+			res, err := protocols.TestTLS(&hp, insecureSkipVerify)
+			if err != nil {
+				r.Error = err.Error()
+			} else {
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
+			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
+	}
+	wg.Wait()
+	return results
+}
+
+func runHTTPTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, url := range cfg.HTTP {
+		wg.Add(1)
+		go func(u string) {
+			defer wg.Done()
+			r := ProbeResult{Protocol: "HTTP", Target: u}
+			res, err := protocols.TestHTTP(u)
+			if err != nil {
+				r.Error = err.Error()
+			} else {
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
+				r.StatusCode = ptrInt(res.StatusCode)
+			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(url)
+	}
+	wg.Wait()
+	return results
+}
+
+func runHTTPSTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, url := range cfg.HTTPS {
+		wg.Add(1)
+		go func(u string) {
+			defer wg.Done()
+			r := ProbeResult{Protocol: "HTTPS", Target: u}
+			res, err := protocols.TestHTTP(u)
+			if err != nil {
+				r.Error = err.Error()
+			} else {
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
+				r.StatusCode = ptrInt(res.StatusCode)
+			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(url)
 	}
 	wg.Wait()
 	return results

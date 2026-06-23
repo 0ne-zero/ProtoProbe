@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/0ne-zero/ProtoProbe/config"
+	"github.com/0ne-zero/ProtoProbe/internal/config"
 )
 
 type TCPResult struct {

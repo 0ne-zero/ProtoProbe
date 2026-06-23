@@ -7,10 +7,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/0ne-zero/ProtoProbe/cmd/flags"
-	"github.com/0ne-zero/ProtoProbe/config"
-	"github.com/0ne-zero/ProtoProbe/protocols"
-	"github.com/0ne-zero/ProtoProbe/protocols/dns"
+	"github.com/0ne-zero/ProtoProbe/internal/flags"
+	"github.com/0ne-zero/ProtoProbe/internal/config"
+	"github.com/0ne-zero/ProtoProbe/internal/protocols"
+	"github.com/0ne-zero/ProtoProbe/internal/protocols/dns"
 )
 
 func main() {

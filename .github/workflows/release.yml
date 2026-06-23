@@ -42,7 +42,7 @@ jobs:
         if [ "${GOOS}" = "windows" ]; then EXT=".exe"; fi
 
         OUT="protoprobe-${{ env.TAG_NAME }}-${GOOS}-${GOARCH}${EXT}"
-        GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "-s -w" -o dist/$OUT ./cmd
+        GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "-s -w" -o dist/$OUT ./cmd/protoprobe
 
     - name: Generate checksum
       run: |

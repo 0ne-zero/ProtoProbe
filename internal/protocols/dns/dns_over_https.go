@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/0ne-zero/ProtoProbe/config"
+	"github.com/0ne-zero/ProtoProbe/internal/config"
 	"github.com/miekg/dns"
 )
 

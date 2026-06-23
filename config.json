@@ -4,42 +4,37 @@
         "1.1.1.1",
         "185.143.234.200"
     ],
-    "tcp": [{
-        "host": "google.com",
-        "port": 443
-    },{
-        "host": "arvancloud.ir",
-        "port": 443
-    }],
-    "dns": [{
-        "host": "1.1.1.1",
-        "port": 53,
-        "query": "yahoo.com"
-    }, {
-        "host": "8.8.8.8",
-        "port": 53,
-        "query": "yahoo.com"
-    }],
-    "dot": [{
-        "host": "1.1.1.1",
-        "port": 853,
-        "query": "yahoo.com"
-    }],
-    "doh": [{
-        "address": "https://cloudflare-dns.com/dns-query",
-        "query": "yahoo.com"
-    }],
-    "websocket": [
-        "wss://ws.postman-echo.com/raw"
+    "dns": [
+        {"host": "1.1.1.1", "port": 53, "query": "yahoo.com"},
+        {"host": "8.8.8.8", "port": 53, "query": "yahoo.com"}
+    ],
+    "tcp": [
+        {"host": "google.com",      "port": 443},
+        {"host": "arvancloud.ir",   "port": 443}
+    ],
+    "tls": [
+        {"host": "www.google.com",     "port": 443},
+        {"host": "www.arvancloud.ir", "port": 443}
+    ],
+    "dot": [
+        {"host": "1.1.1.1", "port": 853, "query": "yahoo.com"}
+    ],
+    "doh": [
+        {"address": "https://cloudflare-dns.com/dns-query", "query": "yahoo.com"}
+    ],
+    "http": [
+        "http://neverssl.com",
+        "http://example.com"
+    ],
+    "https": [
+        "https://www.google.com",
+        "https://www.arvancloud.ir"
     ],
     "quic": [
-        {
-            "host": "cloudflare-quic.com",
-        "port": 443
-        },
-        {
-            "host": "www.google.com",
-            "port": 443
-        }
+        {"host": "cloudflare-quic.com", "port": 443},
+        {"host": "www.google.com",      "port": 443}
+    ],
+    "websocket": [
+        "wss://ws.postman-echo.com/raw"
     ]
 }

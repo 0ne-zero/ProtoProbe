@@ -3,6 +3,7 @@ package flags
 import (
 	"flag"
 	"fmt"
+	"os"
 )
 
 const DefaultConfigFilePath = "config.json"
@@ -32,27 +33,38 @@ type Options struct {
 	JSON           bool // emit results as JSON instead of human-readable text
 }
 
+// ParseFlags parses command-line flags from os.Args[1:].
 func ParseFlags() (Options, error) {
-	var opts Options
-	flag.StringVar(&opts.ConfigFilePath, "config", DefaultConfigFilePath, "Path to config file")
-	flag.BoolVar(&opts.All, "all", false, "Test all protocols")
-	flag.BoolVar(&opts.ICMP, "icmp", false, "Test ICMP")
-	flag.BoolVar(&opts.TCP, "tcp", false, "Test TCP")
-	flag.BoolVar(&opts.TLS, "tls", false, "Test TLS handshake")
-	flag.BoolVar(&opts.TLSInsecure, "tls-insecure", false, "Skip TLS certificate verification for TLS")
-	flag.BoolVar(&opts.DoUDP, "dou", false, "Test DNS over UDP")
-	flag.BoolVar(&opts.DoTCP, "dotcp", false, "Test DNS over TCP")
-	flag.BoolVar(&opts.DoT, "dot", false, "Test DNS over TLS")
-	flag.BoolVar(&opts.DoTInsecure, "dot-insecure", false, "Skip TLS certificate verification for DoT")
-	flag.BoolVar(&opts.DoH, "doh", false, "Test DNS over HTTPS")
-	flag.BoolVar(&opts.HTTP, "http", false, "Test HTTP")
-	flag.BoolVar(&opts.HTTPS, "https", false, "Test HTTPS")
-	flag.BoolVar(&opts.WebSocket, "websocket", false, "Test WebSocket")
-	flag.BoolVar(&opts.QUIC, "quic", false, "Test QUIC (HTTP/3 handshake)")
-	flag.BoolVar(&opts.QUICInsecure, "quic-insecure", false, "Skip TLS certificate verification for QUIC")
-	flag.BoolVar(&opts.JSON, "json", false, "Output results as JSON")
+	return ParseFlagsFrom(os.Args[1:])
+}
 
-	flag.Parse()
+// ParseFlagsFrom parses flags from the given args slice using a fresh FlagSet.
+// This is the testable core; ParseFlags delegates to it with os.Args[1:].
+func ParseFlagsFrom(args []string) (Options, error) {
+	var opts Options
+	fs := flag.NewFlagSet("protoprobe", flag.ContinueOnError)
+
+	fs.StringVar(&opts.ConfigFilePath, "config", DefaultConfigFilePath, "Path to config file")
+	fs.BoolVar(&opts.All, "all", false, "Test all protocols")
+	fs.BoolVar(&opts.ICMP, "icmp", false, "Test ICMP")
+	fs.BoolVar(&opts.TCP, "tcp", false, "Test TCP")
+	fs.BoolVar(&opts.TLS, "tls", false, "Test TLS handshake")
+	fs.BoolVar(&opts.TLSInsecure, "tls-insecure", false, "Skip TLS certificate verification for TLS")
+	fs.BoolVar(&opts.DoUDP, "dou", false, "Test DNS over UDP")
+	fs.BoolVar(&opts.DoTCP, "dotcp", false, "Test DNS over TCP")
+	fs.BoolVar(&opts.DoT, "dot", false, "Test DNS over TLS")
+	fs.BoolVar(&opts.DoTInsecure, "dot-insecure", false, "Skip TLS certificate verification for DoT")
+	fs.BoolVar(&opts.DoH, "doh", false, "Test DNS over HTTPS")
+	fs.BoolVar(&opts.HTTP, "http", false, "Test HTTP")
+	fs.BoolVar(&opts.HTTPS, "https", false, "Test HTTPS")
+	fs.BoolVar(&opts.WebSocket, "websocket", false, "Test WebSocket")
+	fs.BoolVar(&opts.QUIC, "quic", false, "Test QUIC (HTTP/3 handshake)")
+	fs.BoolVar(&opts.QUICInsecure, "quic-insecure", false, "Skip TLS certificate verification for QUIC")
+	fs.BoolVar(&opts.JSON, "json", false, "Output results as JSON")
+
+	if err := fs.Parse(args); err != nil {
+		return opts, err
+	}
 
 	// Validate: -all cannot be used with other protocol flags
 	if opts.All && (opts.ICMP || opts.TCP || opts.TLS || opts.DoUDP || opts.DoTCP || opts.DoT || opts.DoH || opts.HTTP || opts.HTTPS || opts.WebSocket || opts.QUIC) {

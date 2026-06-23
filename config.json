@@ -29,5 +29,17 @@
         "address": "https://cloudflare-dns.com/dns-query",
         "query": "yahoo.com"
     }],
-    "websocket": ["wss://echo.websocket.events"]
+    "websocket": [
+        "wss://ws.postman-echo.com/raw"
+    ],
+    "quic": [
+        {
+            "host": "cloudflare-quic.com",
+        "port": 443
+        },
+        {
+            "host": "www.google.com",
+            "port": 443
+        }
+    ]
 }

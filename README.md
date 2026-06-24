@@ -4,25 +4,79 @@ ProtoProbe is a modular Go tool for testing internet protocol connectivity. Buil
 
 ---
 
-## Supported protocols
+## Example output
 
-| Flag | Protocol | Notes |
-|---|---|---|
-| `-icmp` | ICMP (ping) | Requires root / `CAP_NET_RAW` on Linux |
-| `-dou` | DNS over UDP | Standard DNS |
-| `-dotcp` | DNS over TCP | DNS fallback transport |
-| `-tcp` | TCP | Generic transport connectivity |
-| `-tls` | TLS handshake | Detects SNI-based blocking |
-| `-ech` | ECH (Encrypted Client Hello) | Fetches ECH config via DNS HTTPS record; reports whether ECH was accepted |
-| `-dot` | DNS over TLS (DoT) | |
-| `-doq` | DNS over QUIC (DoQ) | RFC 9250 |
-| `-doh` | DNS over HTTPS (DoH) | |
-| `-http` | HTTP | |
-| `-https` | HTTPS | |
-| `-quic` | QUIC (HTTP/3 handshake) | |
-| `-websocket` | WebSocket | |
-| `-stun` | STUN (NAT binding) | RFC 8489; UDP |
-| `-ntp` | NTP | RFC 5905; UDP |
+**Human-readable (default):**
+```
+./protoprobe -all
+PROTOCOL         TARGET                                RTT      RESULT
+───────────────  ────────────────────────────────────  ───────  ──────
+ICMP             1.1.1.1                               34ms     ✅  loss: 0.00%
+ICMP             8.8.8.8                               34ms     ✅  loss: 0.00%
+ICMP             185.143.234.200                       62ms     ✅  loss: 0.00%
+DNS/UDP          1.1.1.1:53                            62ms     ✅
+DNS/UDP          8.8.8.8:53                            66ms     ✅
+DNS/TCP          8.8.8.8:53                            111ms    ✅
+DNS/TCP          1.1.1.1:53                            118ms    ✅
+DNS/TLS (DoT)    1.1.1.1:853                           195ms    ✅
+DNS/QUIC (DoQ)   dns.adguard.com:8853                  2226ms   ✅
+DNS/HTTPS (DoH)  https://cloudflare-dns.com/dns-query  212ms    ✅
+TCP              arvancloud.ir:443                     46ms     ✅
+TCP              google.com:443                        49ms     ✅
+HTTP             http://example.com                    167ms    ✅  status: 200
+HTTP             http://httpforever.com                478ms    ✅  status: 200
+HTTPS            https://www.arvancloud.ir             250ms    ✅  status: 200
+HTTPS            https://www.google.com                554ms    ✅  status: 200
+TLS              www.arvancloud.ir:443                 191ms    ✅
+TLS              www.google.com:443                    200ms    ✅
+ECH              crypto.cloudflare.com:443             185ms    ✅  ech: accepted
+ECH              tls-ech.dev:443                       453ms    ✅  ech: accepted
+QUIC             cloudflare-quic.com:443               154ms    ✅
+QUIC             www.google.com:443                    170ms    ✅
+QUIC             digikala.ir:443                       -        ❌  timeout: no recent network activity
+WebSocket        wss://ws.postman-echo.com/raw         749ms    ✅
+STUN             stun.cloudflare.com:3478              69ms     ✅
+STUN             stun.l.google.com:19302               79ms     ✅
+NTP              time.cloudflare.com:123               88ms     ✅
+NTP              time.google.com:123                   111ms    ✅
+```
+
+**JSON (`-json`):**
+```bash
+./protoprobe -icmp -tcp -ech -json
+```
+```json
+{
+  "results": [
+    {
+      "protocol": "ICMP",
+      "target": "8.8.8.8",
+      "success": true,
+      "rtt_ms": 75,
+      "packet_loss": 0
+    },
+    {
+      "protocol": "TCP",
+      "target": "google.com:443",
+      "success": true,
+      "rtt_ms": 273
+    },
+    {
+      "protocol": "TCP",
+      "target": "arvancloud.ir:443",
+      "success": false,
+      "error": "dial tcp: connection refused"
+    },
+    {
+      "protocol": "ECH",
+      "target": "crypto.cloudflare.com:443",
+      "success": true,
+      "rtt_ms": 290,
+      "ech_accepted": true
+    }
+  ]
+}
+```
 
 ---
 
@@ -209,82 +263,6 @@ Usage of protoprobe:
         Output results as JSON
   -config string
         Path to config file (default "config.json")
-```
-
----
-
-## Example output
-
-**Human-readable (default):**
-```
-./protoprobe -all
-PROTOCOL         TARGET                                RTT      RESULT
-───────────────  ────────────────────────────────────  ───────  ──────
-ICMP             1.1.1.1                               34ms     ✅  loss: 0.00%
-ICMP             8.8.8.8                               34ms     ✅  loss: 0.00%
-ICMP             185.143.234.200                       62ms     ✅  loss: 0.00%
-DNS/UDP          1.1.1.1:53                            62ms     ✅
-DNS/UDP          8.8.8.8:53                            66ms     ✅
-DNS/TCP          8.8.8.8:53                            111ms    ✅
-DNS/TCP          1.1.1.1:53                            118ms    ✅
-DNS/TLS (DoT)    1.1.1.1:853                           195ms    ✅
-DNS/QUIC (DoQ)   dns.adguard.com:8853                  2226ms   ✅
-DNS/HTTPS (DoH)  https://cloudflare-dns.com/dns-query  212ms    ✅
-TCP              arvancloud.ir:443                     46ms     ✅
-TCP              google.com:443                        49ms     ✅
-HTTP             http://example.com                    167ms    ✅  status: 200
-HTTP             http://httpforever.com                478ms    ✅  status: 200
-HTTPS            https://www.arvancloud.ir             250ms    ✅  status: 200
-HTTPS            https://www.google.com                554ms    ✅  status: 200
-TLS              www.arvancloud.ir:443                 191ms    ✅
-TLS              www.google.com:443                    200ms    ✅
-ECH              crypto.cloudflare.com:443             185ms    ✅  ech: accepted
-ECH              tls-ech.dev:443                       453ms    ✅  ech: accepted
-QUIC             cloudflare-quic.com:443               154ms    ✅
-QUIC             www.google.com:443                    170ms    ✅
-QUIC             digikala.ir:443                       -        ❌  timeout: no recent network activity
-WebSocket        wss://ws.postman-echo.com/raw         749ms    ✅
-STUN             stun.cloudflare.com:3478              69ms     ✅
-STUN             stun.l.google.com:19302               79ms     ✅
-NTP              time.cloudflare.com:123               88ms     ✅
-NTP              time.google.com:123                   111ms    ✅
-```
-
-**JSON (`-json`):**
-```bash
-./protoprobe -icmp -tcp -ech -json
-```
-```json
-{
-  "results": [
-    {
-      "protocol": "ICMP",
-      "target": "8.8.8.8",
-      "success": true,
-      "rtt_ms": 75,
-      "packet_loss": 0
-    },
-    {
-      "protocol": "TCP",
-      "target": "google.com:443",
-      "success": true,
-      "rtt_ms": 273
-    },
-    {
-      "protocol": "TCP",
-      "target": "arvancloud.ir:443",
-      "success": false,
-      "error": "dial tcp: connection refused"
-    },
-    {
-      "protocol": "ECH",
-      "target": "crypto.cloudflare.com:443",
-      "success": true,
-      "rtt_ms": 290,
-      "ech_accepted": true
-    }
-  ]
-}
 ```
 
 ---

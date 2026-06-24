@@ -9,13 +9,17 @@ type Config struct {
 	ICMP      []string        `json:"icmp"`
 	TCP       []HostPort      `json:"tcp"`
 	TLS       []HostPort      `json:"tls"`
+	ECH       []HostPort      `json:"ech"`
 	DNS       []HostPortQuery `json:"dns"`
 	DoT       []HostPortQuery `json:"dot"`
+	DoQ       []HostPortQuery `json:"doq"`
 	DoH       []URLQuery      `json:"doh"`
 	HTTP      []string        `json:"http"`
 	HTTPS     []string        `json:"https"`
 	QUIC      []HostPort      `json:"quic"`
 	WebSocket []string        `json:"websocket"`
+	STUN      []HostPort      `json:"stun"`
+	NTP       []HostPort      `json:"ntp"`
 }
 
 type HostPort struct {

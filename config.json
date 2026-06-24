@@ -5,22 +5,71 @@
         "185.143.234.200"
     ],
     "dns": [
-        {"host": "1.1.1.1", "port": 53, "query": "yahoo.com"},
-        {"host": "8.8.8.8", "port": 53, "query": "yahoo.com"}
+        {
+            "host": "1.1.1.1",
+            "port": 53,
+            "query": "yahoo.com"
+        },
+        {
+            "host": "8.8.8.8",
+            "port": 53,
+            "query": "yahoo.com"
+        }
     ],
     "tcp": [
-        {"host": "google.com",      "port": 443},
-        {"host": "arvancloud.ir",   "port": 443}
+        {
+            "host": "google.com",
+            "port": 443
+        },
+        {
+            "host": "arvancloud.ir",
+            "port": 443
+        }
     ],
     "tls": [
-        {"host": "www.google.com",     "port": 443},
-        {"host": "www.arvancloud.ir", "port": 443}
+        {
+            "host": "www.google.com",
+            "port": 443
+        },
+        {
+            "host": "www.arvancloud.ir",
+            "port": 443
+        }
+    ],
+    "ech": [
+        {
+            "host": "crypto.cloudflare.com",
+            "port": 443
+        },
+        {
+            "host": "tls-ech.dev",
+            "port": 443
+        }
     ],
     "dot": [
-        {"host": "1.1.1.1", "port": 853, "query": "yahoo.com"}
+        {
+            "host": "1.1.1.1",
+            "port": 853,
+            "query": "yahoo.com"
+        }
+    ],
+    "doq": [
+        {
+            "host": "dns.cloudflare.com",
+            "port": 853,
+            "query": "yahoo.com"
+        },
+        {
+            "host": "dns.adguard.com",
+            "port": 8853,
+            "query": "yahoo.com"
+        }
     ],
     "doh": [
-        {"address": "https://cloudflare-dns.com/dns-query", "query": "yahoo.com"}
+        {
+            "address": "https://cloudflare-dns.com/dns-query",
+            "query": "yahoo.com"
+        }
     ],
     "http": [
         "http://neverssl.com",
@@ -31,10 +80,36 @@
         "https://www.arvancloud.ir"
     ],
     "quic": [
-        {"host": "cloudflare-quic.com", "port": 443},
-        {"host": "www.google.com",      "port": 443}
+        {
+            "host": "cloudflare-quic.com",
+            "port": 443
+        },
+        {
+            "host": "www.google.com",
+            "port": 443
+        }
     ],
     "websocket": [
         "wss://ws.postman-echo.com/raw"
+    ],
+    "stun": [
+        {
+            "host": "stun.l.google.com",
+            "port": 19302
+        },
+        {
+            "host": "stun.cloudflare.com",
+            "port": 3478
+        }
+    ],
+    "ntp": [
+        {
+            "host": "time.cloudflare.com",
+            "port": 123
+        },
+        {
+            "host": "time.google.com",
+            "port": 123
+        }
     ]
 }

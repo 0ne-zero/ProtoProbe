@@ -86,11 +86,33 @@ func main() {
 		allResults = append(allResults, results...)
 	}
 
+	if opts.All || opts.ECH {
+		if !opts.JSON {
+			printHeader("ECH")
+		}
+		results := runECHTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
 	if opts.All || opts.DoT {
 		if !opts.JSON {
 			printHeader("DoT")
 		}
 		results := runDoTTest(cfg, opts.DoTInsecure)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
+	if opts.All || opts.DoQ {
+		if !opts.JSON {
+			printHeader("DoQ")
+		}
+		results := runDoQTest(cfg)
 		if !opts.JSON {
 			printHuman(results)
 		}
@@ -146,6 +168,28 @@ func main() {
 			printHeader("WebSocket")
 		}
 		results := runWebSocketTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
+	if opts.All || opts.STUN {
+		if !opts.JSON {
+			printHeader("STUN")
+		}
+		results := runSTUNTest(cfg)
+		if !opts.JSON {
+			printHuman(results)
+		}
+		allResults = append(allResults, results...)
+	}
+
+	if opts.All || opts.NTP {
+		if !opts.JSON {
+			printHeader("NTP")
+		}
+		results := runNTPTest(cfg)
 		if !opts.JSON {
 			printHuman(results)
 		}
@@ -436,6 +480,111 @@ func runHTTPSTest(cfg *config.Config) []ProbeResult {
 			results = append(results, r)
 			mu.Unlock()
 		}(url)
+	}
+	wg.Wait()
+	return results
+}
+
+func runECHTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.ECH {
+		wg.Add(1)
+		go func(hp config.HostPort) {
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "ECH", Target: target}
+			res, err := protocols.TestECH(&hp)
+			if err != nil {
+				r.Error = err.Error()
+			} else {
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
+				r.ECHAccepted = ptrBool(res.ECHAccepted)
+			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
+	}
+	wg.Wait()
+	return results
+}
+
+func runDoQTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.DoQ {
+		wg.Add(1)
+		go func(hp config.HostPortQuery) {
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "DNS/QUIC (DoQ)", Target: target}
+			res, err := dns.TestDoQ(&hp)
+			if err != nil {
+				r.Error = err.Error()
+			} else {
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
+			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
+	}
+	wg.Wait()
+	return results
+}
+
+func runSTUNTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.STUN {
+		wg.Add(1)
+		go func(hp config.HostPort) {
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "STUN", Target: target}
+			res, err := protocols.TestSTUN(&hp)
+			if err != nil {
+				r.Error = err.Error()
+			} else {
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
+			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
+	}
+	wg.Wait()
+	return results
+}
+
+func runNTPTest(cfg *config.Config) []ProbeResult {
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var results []ProbeResult
+	for _, hp := range cfg.NTP {
+		wg.Add(1)
+		go func(hp config.HostPort) {
+			defer wg.Done()
+			target := net.JoinHostPort(hp.Host, fmt.Sprintf("%d", hp.Port))
+			r := ProbeResult{Protocol: "NTP", Target: target}
+			res, err := protocols.TestNTP(&hp)
+			if err != nil {
+				r.Error = err.Error()
+			} else {
+				r.Success = true
+				r.RTTMs = rttMillis(res.RTT)
+			}
+			mu.Lock()
+			results = append(results, r)
+			mu.Unlock()
+		}(hp)
 	}
 	wg.Wait()
 	return results

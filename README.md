@@ -13,12 +13,16 @@ ProtoProbe is a modular Go tool for testing internet protocol connectivity. Buil
 | `-dotcp` | DNS over TCP | DNS fallback transport |
 | `-tcp` | TCP | Generic transport connectivity |
 | `-tls` | TLS handshake | Detects SNI-based blocking |
+| `-ech` | ECH (Encrypted Client Hello) | Fetches ECH config via DNS HTTPS record; reports whether ECH was accepted |
 | `-dot` | DNS over TLS (DoT) | |
+| `-doq` | DNS over QUIC (DoQ) | RFC 9250 |
 | `-doh` | DNS over HTTPS (DoH) | |
 | `-http` | HTTP | |
 | `-https` | HTTPS | |
 | `-quic` | QUIC (HTTP/3 handshake) | |
 | `-websocket` | WebSocket | |
+| `-stun` | STUN (NAT binding) | RFC 8489; UDP |
+| `-ntp` | NTP | RFC 5905; UDP |
 
 ---
 
@@ -42,16 +46,22 @@ ProtoProbe reads targets from a JSON config file (default: `config.json` in the 
 
 ```json
 {
-    "icmp": ["8.8.8.8", "1.1.1.1"],
+    "icmp": [
+        "8.8.8.8",
+        "1.1.1.1",
+        "185.143.234.200"
+    ],
     "dns": [
         {"host": "1.1.1.1", "port": 53, "query": "yahoo.com"},
         {"host": "8.8.8.8", "port": 53, "query": "yahoo.com"}
     ],
     "tcp": [
-        {"host": "google.com", "port": 443}
+        {"host": "google.com",      "port": 443},
+        {"host": "arvancloud.ir",   "port": 443}
     ],
     "tls": [
-        {"host": "www.google.com", "port": 443}
+        {"host": "www.google.com",     "port": 443},
+        {"host": "www.arvancloud.ir", "port": 443}
     ],
     "dot": [
         {"host": "1.1.1.1", "port": 853, "query": "yahoo.com"}
@@ -59,13 +69,21 @@ ProtoProbe reads targets from a JSON config file (default: `config.json` in the 
     "doh": [
         {"address": "https://cloudflare-dns.com/dns-query", "query": "yahoo.com"}
     ],
-    "http":  ["http://neverssl.com", "http://example.com"],
-    "https": ["https://www.google.com"],
+    "http": [
+        "http://neverssl.com",
+        "http://example.com"
+    ],
+    "https": [
+        "https://www.google.com",
+        "https://www.arvancloud.ir"
+    ],
     "quic": [
         {"host": "cloudflare-quic.com", "port": 443},
         {"host": "www.google.com",      "port": 443}
     ],
-    "websocket": ["wss://ws.postman-echo.com/raw"]
+    "websocket": [
+        "wss://ws.postman-echo.com/raw"
+    ]
 }
 ```
 
@@ -89,10 +107,14 @@ Usage of protoprobe:
         Test TLS handshake
   -tls-insecure
         Skip TLS certificate verification for TLS
+  -ech
+        Test TLS with Encrypted Client Hello
   -dot
         Test DNS over TLS
   -dot-insecure
         Skip TLS certificate verification for DoT
+  -doq
+        Test DNS over QUIC
   -doh
         Test DNS over HTTPS
   -http
@@ -105,6 +127,10 @@ Usage of protoprobe:
         Skip TLS certificate verification for QUIC
   -websocket
         Test WebSocket
+  -stun
+        Test STUN (NAT binding)
+  -ntp
+        Test NTP
   -json
         Output results as JSON
   -config string

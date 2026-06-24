@@ -19,14 +19,18 @@ type Options struct {
 	ICMP           bool
 	TCP            bool
 	TLS            bool
+	ECH            bool
 	DoUDP          bool // DNS over UDP
 	DoTCP          bool // DNS over TCP
 	DoT            bool
+	DoQ            bool
 	DoH            bool
 	HTTP           bool
 	HTTPS          bool
 	WebSocket      bool
 	QUIC           bool
+	STUN           bool
+	NTP            bool
 	DoTInsecure    bool // skip TLS certificate verification for DoT
 	TLSInsecure    bool // skip TLS certificate verification for TLS
 	QUICInsecure   bool // skip TLS certificate verification for QUIC
@@ -50,16 +54,20 @@ func ParseFlagsFrom(args []string) (Options, error) {
 	fs.BoolVar(&opts.TCP, "tcp", false, "Test TCP")
 	fs.BoolVar(&opts.TLS, "tls", false, "Test TLS handshake")
 	fs.BoolVar(&opts.TLSInsecure, "tls-insecure", false, "Skip TLS certificate verification for TLS")
+	fs.BoolVar(&opts.ECH, "ech", false, "Test TLS with Encrypted Client Hello")
 	fs.BoolVar(&opts.DoUDP, "dou", false, "Test DNS over UDP")
 	fs.BoolVar(&opts.DoTCP, "dotcp", false, "Test DNS over TCP")
 	fs.BoolVar(&opts.DoT, "dot", false, "Test DNS over TLS")
 	fs.BoolVar(&opts.DoTInsecure, "dot-insecure", false, "Skip TLS certificate verification for DoT")
+	fs.BoolVar(&opts.DoQ, "doq", false, "Test DNS over QUIC")
 	fs.BoolVar(&opts.DoH, "doh", false, "Test DNS over HTTPS")
 	fs.BoolVar(&opts.HTTP, "http", false, "Test HTTP")
 	fs.BoolVar(&opts.HTTPS, "https", false, "Test HTTPS")
 	fs.BoolVar(&opts.WebSocket, "websocket", false, "Test WebSocket")
 	fs.BoolVar(&opts.QUIC, "quic", false, "Test QUIC (HTTP/3 handshake)")
 	fs.BoolVar(&opts.QUICInsecure, "quic-insecure", false, "Skip TLS certificate verification for QUIC")
+	fs.BoolVar(&opts.STUN, "stun", false, "Test STUN (NAT binding)")
+	fs.BoolVar(&opts.NTP, "ntp", false, "Test NTP")
 	fs.BoolVar(&opts.JSON, "json", false, "Output results as JSON")
 
 	if err := fs.Parse(args); err != nil {
@@ -67,12 +75,12 @@ func ParseFlagsFrom(args []string) (Options, error) {
 	}
 
 	// Validate: -all cannot be used with other protocol flags
-	if opts.All && (opts.ICMP || opts.TCP || opts.TLS || opts.DoUDP || opts.DoTCP || opts.DoT || opts.DoH || opts.HTTP || opts.HTTPS || opts.WebSocket || opts.QUIC) {
+	if opts.All && (opts.ICMP || opts.TCP || opts.TLS || opts.ECH || opts.DoUDP || opts.DoTCP || opts.DoT || opts.DoQ || opts.DoH || opts.HTTP || opts.HTTPS || opts.WebSocket || opts.QUIC || opts.STUN || opts.NTP) {
 		return opts, errorALLFlagConflict
 	}
 
 	// Validate: at least one protocol flag must be present
-	if !opts.All && !opts.ICMP && !opts.TCP && !opts.TLS && !opts.DoUDP && !opts.DoTCP && !opts.DoT && !opts.DoH && !opts.HTTP && !opts.HTTPS && !opts.WebSocket && !opts.QUIC {
+	if !opts.All && !opts.ICMP && !opts.TCP && !opts.TLS && !opts.ECH && !opts.DoUDP && !opts.DoTCP && !opts.DoT && !opts.DoQ && !opts.DoH && !opts.HTTP && !opts.HTTPS && !opts.WebSocket && !opts.QUIC && !opts.STUN && !opts.NTP {
 		return opts, ErrorNoFlags
 	}
 

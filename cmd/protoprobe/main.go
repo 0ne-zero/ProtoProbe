@@ -48,15 +48,6 @@ func main() {
 	if opts.All || opts.DoTCP {
 		enqueue(func(ch chan<- ProbeResult) { runDnsOverTCPTest(cfg, ch) })
 	}
-	if opts.All || opts.TCP {
-		enqueue(func(ch chan<- ProbeResult) { runTCPTest(cfg, ch) })
-	}
-	if opts.All || opts.TLS {
-		enqueue(func(ch chan<- ProbeResult) { runTLSTest(cfg, opts.TLSInsecure, ch) })
-	}
-	if opts.All || opts.ECH {
-		enqueue(func(ch chan<- ProbeResult) { runECHTest(cfg, ch) })
-	}
 	if opts.All || opts.DoT {
 		enqueue(func(ch chan<- ProbeResult) { runDoTTest(cfg, opts.DoTInsecure, ch) })
 	}
@@ -66,11 +57,20 @@ func main() {
 	if opts.All || opts.DoH {
 		enqueue(func(ch chan<- ProbeResult) { runDoHTest(cfg, ch) })
 	}
+	if opts.All || opts.TCP {
+		enqueue(func(ch chan<- ProbeResult) { runTCPTest(cfg, ch) })
+	}
 	if opts.All || opts.HTTP {
 		enqueue(func(ch chan<- ProbeResult) { runHTTPTest(cfg, ch) })
 	}
 	if opts.All || opts.HTTPS {
 		enqueue(func(ch chan<- ProbeResult) { runHTTPSTest(cfg, ch) })
+	}
+	if opts.All || opts.TLS {
+		enqueue(func(ch chan<- ProbeResult) { runTLSTest(cfg, opts.TLSInsecure, ch) })
+	}
+	if opts.All || opts.ECH {
+		enqueue(func(ch chan<- ProbeResult) { runECHTest(cfg, ch) })
 	}
 	if opts.All || opts.QUIC {
 		enqueue(func(ch chan<- ProbeResult) { runQUICTest(cfg, opts.QUICInsecure, ch) })
@@ -136,27 +136,6 @@ func configWidths(cfg *config.Config, opts flags.Options) (wProto, wTarget int) 
 		}
 		upd("DNS/TCP", ts...)
 	}
-	if opts.All || opts.TCP {
-		var ts []string
-		for _, h := range cfg.TCP {
-			ts = append(ts, hp(h.Host, h.Port))
-		}
-		upd("TCP", ts...)
-	}
-	if opts.All || opts.TLS {
-		var ts []string
-		for _, h := range cfg.TLS {
-			ts = append(ts, hp(h.Host, h.Port))
-		}
-		upd("TLS", ts...)
-	}
-	if opts.All || opts.ECH {
-		var ts []string
-		for _, h := range cfg.ECH {
-			ts = append(ts, hp(h.Host, h.Port))
-		}
-		upd("ECH", ts...)
-	}
 	if opts.All || opts.DoT {
 		var ts []string
 		for _, h := range cfg.DoT {
@@ -178,11 +157,32 @@ func configWidths(cfg *config.Config, opts flags.Options) (wProto, wTarget int) 
 		}
 		upd("DNS/HTTPS (DoH)", ts...)
 	}
+	if opts.All || opts.TCP {
+		var ts []string
+		for _, h := range cfg.TCP {
+			ts = append(ts, hp(h.Host, h.Port))
+		}
+		upd("TCP", ts...)
+	}
 	if opts.All || opts.HTTP {
 		upd("HTTP", cfg.HTTP...)
 	}
 	if opts.All || opts.HTTPS {
 		upd("HTTPS", cfg.HTTPS...)
+	}
+	if opts.All || opts.TLS {
+		var ts []string
+		for _, h := range cfg.TLS {
+			ts = append(ts, hp(h.Host, h.Port))
+		}
+		upd("TLS", ts...)
+	}
+	if opts.All || opts.ECH {
+		var ts []string
+		for _, h := range cfg.ECH {
+			ts = append(ts, hp(h.Host, h.Port))
+		}
+		upd("ECH", ts...)
 	}
 	if opts.All || opts.QUIC {
 		var ts []string

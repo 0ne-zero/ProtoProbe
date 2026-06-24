@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -24,30 +26,51 @@ func rttMillis(d time.Duration) *int64 {
 }
 
 func ptrFloat64(f float64) *float64 { return &f }
+func ptrInt(i int) *int             { return &i }
+func ptrBool(b bool) *bool          { return &b }
 
-func ptrInt(i int) *int { return &i }
+// streamTable prints the header immediately, then prints each row as it
+// arrives on resultCh. wProto and wTarget are pre-computed from the config
+// so the header can be aligned before any test completes.
+func streamTable(wProto, wTarget int, resultCh []<-chan ProbeResult) {
+	const wRTT = 7 // wide enough for "99999ms"
 
-func ptrBool(b bool) *bool { return &b }
+	line := func(proto, target, rtt, result string) {
+		fmt.Printf("%-*s  %-*s  %-*s  %s\n", wProto, proto, wTarget, target, wRTT, rtt, result)
+	}
+	dash := func(n int) string { return strings.Repeat("─", n) }
 
-func printHuman(results []ProbeResult) {
-	for _, r := range results {
+	line("PROTOCOL", "TARGET", "RTT", "RESULT")
+	line(dash(wProto), dash(wTarget), dash(wRTT), dash(6))
+
+	for _, ch := range resultCh {
+		for r := range ch {
+		rttStr := "-"
+		if r.RTTMs != nil {
+			rttStr = fmt.Sprintf("%dms", *r.RTTMs)
+		}
+
+		var result string
 		if r.Success {
 			switch {
 			case r.PacketLoss != nil:
-				log.Printf("[%s] | %s | avg-rtt: %dms | packet-loss: %.2f%% ✅\n", r.Protocol, r.Target, *r.RTTMs, *r.PacketLoss)
+				result = fmt.Sprintf("✅  loss: %.2f%%", *r.PacketLoss)
 			case r.StatusCode != nil:
-				log.Printf("[%s] | %s | rtt: %dms | status: %d ✅\n", r.Protocol, r.Target, *r.RTTMs, *r.StatusCode)
+				result = fmt.Sprintf("✅  status: %d", *r.StatusCode)
 			case r.ECHAccepted != nil:
-				echStr := "not accepted"
 				if *r.ECHAccepted {
-					echStr = "accepted"
+					result = "✅  ech: accepted"
+				} else {
+					result = "✅  ech: not accepted"
 				}
-				log.Printf("[%s] | %s | rtt: %dms | ech: %s ✅\n", r.Protocol, r.Target, *r.RTTMs, echStr)
 			default:
-				log.Printf("[%s] | %s | rtt: %dms ✅\n", r.Protocol, r.Target, *r.RTTMs)
+				result = "✅"
 			}
 		} else {
-			log.Printf("[%s] | %s | %s ❌\n", r.Protocol, r.Target, r.Error)
+			result = "❌  " + r.Error
+		}
+
+		line(r.Protocol, r.Target, rttStr, result)
 		}
 	}
 }

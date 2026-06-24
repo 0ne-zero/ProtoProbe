@@ -3,6 +3,7 @@ package dns
 import (
 	"context"
 	"crypto/tls"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"net"
@@ -17,8 +18,10 @@ type DoQResult struct {
 	RTT time.Duration
 }
 
-// TestDoQ sends a DNS query over a QUIC connection (RFC 9250).
-// Messages are sent without a 2-octet length prefix; stream FIN signals end.
+// TestDoQ sends a DNS query over a QUIC connection.
+// Although RFC 9250 specifies no framing, all deployed servers (Cloudflare,
+// AdGuard, etc.) were built on earlier drafts that use the same 2-octet
+// length prefix as DNS-over-TCP. We match that de-facto standard.
 func TestDoQ(target *config.HostPortQuery) (*DoQResult, error) {
 	addr := net.JoinHostPort(target.Host, fmt.Sprintf("%d", target.Port))
 
@@ -41,32 +44,37 @@ func TestDoQ(target *config.HostPortQuery) (*DoQResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer stream.Close()
 
 	m := new(dns.Msg)
 	m.SetQuestion(dns.Fqdn(target.Query), dns.TypeA)
 	m.RecursionDesired = true
-	m.Id = 0 // RFC 9250 §4.2.1: SHOULD be set to zero
+	m.Id = 0 // RFC 9250 §4.2.1: SHOULD be zero
 
 	wire, err := m.Pack()
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := stream.Write(wire); err != nil {
+	// 2-byte length prefix (de-facto standard used by deployed servers)
+	buf := make([]byte, 2+len(wire))
+	binary.BigEndian.PutUint16(buf, uint16(len(wire)))
+	copy(buf[2:], wire)
+
+	if _, err := stream.Write(buf); err != nil {
 		return nil, err
 	}
-	// RFC 9250 §4.2.1: close the write side to signal end of query (no length prefix)
-	stream.Close()
 
-	resp, err := io.ReadAll(stream)
-	if err != nil {
-		return nil, err
+	// Read 2-byte response length, then the DNS payload
+	var lenBuf [2]byte
+	if _, err := io.ReadFull(stream, lenBuf[:]); err != nil {
+		return nil, fmt.Errorf("read response length: %w", err)
+	}
+	resp := make([]byte, binary.BigEndian.Uint16(lenBuf[:]))
+	if _, err := io.ReadFull(stream, resp); err != nil {
+		return nil, fmt.Errorf("read response: %w", err)
 	}
 	rtt := time.Since(start)
-
-	if len(resp) == 0 {
-		return nil, fmt.Errorf("empty response")
-	}
 
 	var reply dns.Msg
 	if err := reply.Unpack(resp); err != nil {

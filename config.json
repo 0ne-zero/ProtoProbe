@@ -13,7 +13,7 @@
         {
             "host": "8.8.8.8",
             "port": 53,
-            "query": "yahoo.com"
+            "query": "arvancloud.ir"
         }
     ],
     "tcp": [
@@ -26,7 +26,35 @@
             "port": 443
         }
     ],
-    "tls": [
+    "dot": [
+        {
+            "host": "1.1.1.1",
+            "port": 853,
+            "query": "yahoo.com"
+        }
+    ],
+    "doq": [
+        {
+            "host": "dns.adguard.com",
+            "port": 8853,
+            "query": "yahoo.com"
+        }
+    ],
+    "doh": [
+        {
+            "address": "https://cloudflare-dns.com/dns-query",
+            "query": "yahoo.com"
+        }
+    ],
+    "http": [
+        "http://httpforever.com",
+        "http://example.com"
+    ],
+    "https": [
+        "https://www.google.com",
+        "https://www.arvancloud.ir"
+    ],
+     "tls": [
         {
             "host": "www.google.com",
             "port": 443
@@ -46,39 +74,6 @@
             "port": 443
         }
     ],
-    "dot": [
-        {
-            "host": "1.1.1.1",
-            "port": 853,
-            "query": "yahoo.com"
-        }
-    ],
-    "doq": [
-        {
-            "host": "dns.cloudflare.com",
-            "port": 853,
-            "query": "yahoo.com"
-        },
-        {
-            "host": "dns.adguard.com",
-            "port": 8853,
-            "query": "yahoo.com"
-        }
-    ],
-    "doh": [
-        {
-            "address": "https://cloudflare-dns.com/dns-query",
-            "query": "yahoo.com"
-        }
-    ],
-    "http": [
-        "http://neverssl.com",
-        "http://example.com"
-    ],
-    "https": [
-        "https://www.google.com",
-        "https://www.arvancloud.ir"
-    ],
     "quic": [
         {
             "host": "cloudflare-quic.com",
@@ -86,6 +81,10 @@
         },
         {
             "host": "www.google.com",
+            "port": 443
+        },
+        {
+            "host": "digikala.ir",
             "port": 443
         }
     ],

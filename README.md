@@ -52,37 +52,111 @@ ProtoProbe reads targets from a JSON config file (default: `config.json` in the 
         "185.143.234.200"
     ],
     "dns": [
-        {"host": "1.1.1.1", "port": 53, "query": "yahoo.com"},
-        {"host": "8.8.8.8", "port": 53, "query": "yahoo.com"}
+        {
+            "host": "1.1.1.1",
+            "port": 53,
+            "query": "yahoo.com"
+        },
+        {
+            "host": "8.8.8.8",
+            "port": 53,
+            "query": "arvancloud.ir"
+        }
     ],
     "tcp": [
-        {"host": "google.com",      "port": 443},
-        {"host": "arvancloud.ir",   "port": 443}
-    ],
-    "tls": [
-        {"host": "www.google.com",     "port": 443},
-        {"host": "www.arvancloud.ir", "port": 443}
+        {
+            "host": "google.com",
+            "port": 443
+        },
+        {
+            "host": "arvancloud.ir",
+            "port": 443
+        }
     ],
     "dot": [
-        {"host": "1.1.1.1", "port": 853, "query": "yahoo.com"}
+        {
+            "host": "1.1.1.1",
+            "port": 853,
+            "query": "yahoo.com"
+        }
+    ],
+    "doq": [
+        {
+            "host": "dns.adguard.com",
+            "port": 8853,
+            "query": "yahoo.com"
+        }
     ],
     "doh": [
-        {"address": "https://cloudflare-dns.com/dns-query", "query": "yahoo.com"}
+        {
+            "address": "https://cloudflare-dns.com/dns-query",
+            "query": "yahoo.com"
+        }
     ],
     "http": [
-        "http://neverssl.com",
+        "http://httpforever.com",
         "http://example.com"
     ],
     "https": [
         "https://www.google.com",
         "https://www.arvancloud.ir"
     ],
+     "tls": [
+        {
+            "host": "www.google.com",
+            "port": 443
+        },
+        {
+            "host": "www.arvancloud.ir",
+            "port": 443
+        }
+    ],
+    "ech": [
+        {
+            "host": "crypto.cloudflare.com",
+            "port": 443
+        },
+        {
+            "host": "tls-ech.dev",
+            "port": 443
+        }
+    ],
     "quic": [
-        {"host": "cloudflare-quic.com", "port": 443},
-        {"host": "www.google.com",      "port": 443}
+        {
+            "host": "cloudflare-quic.com",
+            "port": 443
+        },
+        {
+            "host": "www.google.com",
+            "port": 443
+        },
+        {
+            "host": "digikala.ir",
+            "port": 443
+        }
     ],
     "websocket": [
         "wss://ws.postman-echo.com/raw"
+    ],
+    "stun": [
+        {
+            "host": "stun.l.google.com",
+            "port": 19302
+        },
+        {
+            "host": "stun.cloudflare.com",
+            "port": 3478
+        }
+    ],
+    "ntp": [
+        {
+            "host": "time.cloudflare.com",
+            "port": 123
+        },
+        {
+            "host": "time.google.com",
+            "port": 123
+        }
     ]
 }
 ```
@@ -144,47 +218,41 @@ Usage of protoprobe:
 **Human-readable (default):**
 ```
 ./protoprobe -all
-
-ICMP:
-2025/07/15 20:22:57 [ICMP] | 8.8.8.8 | avg-rtt: 75ms | packet-loss: 0.00% ✅
-2025/07/15 20:22:57 [ICMP] | 1.1.1.1 | avg-rtt: 135ms | packet-loss: 0.00% ✅
-
-Dns over UDP:
-2025/07/15 20:22:58 [DNS/UDP] | 8.8.8.8:53 | rtt: 68ms ✅
-2025/07/15 20:22:58 [DNS/UDP] | 1.1.1.1:53 | rtt: 141ms ✅
-
-Dns over TCP:
-2025/07/15 20:23:00 [DNS/TCP] | 8.8.8.8:53 | EOF ❌
-2025/07/15 20:23:06 [DNS/TCP] | 1.1.1.1:53 | i/o timeout ❌
-
-TCP:
-2025/07/15 20:22:58 [TCP] | google.com:443 | rtt: 273ms ✅
-
-TLS:
-2025/07/15 20:22:59 [TLS] | www.google.com:443 | rtt: 310ms ✅
-
-DoT:
-2025/07/15 20:23:14 [DNS/TLS (DoT)] | 1.1.1.1:853 | context deadline exceeded ❌
-
-DoH:
-2025/07/15 20:23:15 [DNS/HTTPS (DoH)] | https://cloudflare-dns.com/dns-query | rtt: 723ms ✅
-
-HTTP:
-2025/07/15 20:23:15 [HTTP] | http://neverssl.com | rtt: 210ms | status: 200 ✅
-
-HTTPS:
-2025/07/15 20:23:16 [HTTPS] | https://www.google.com | rtt: 289ms | status: 200 ✅
-
-QUIC:
-2025/07/15 20:23:16 [QUIC] | cloudflare-quic.com:443 | rtt: 180ms ✅
-
-WebSocket:
-2025/07/15 20:23:17 [WebSocket] | wss://ws.postman-echo.com/raw | rtt: 921ms ✅
+PROTOCOL         TARGET                                RTT      RESULT
+───────────────  ────────────────────────────────────  ───────  ──────
+ICMP             1.1.1.1                               34ms     ✅  loss: 0.00%
+ICMP             8.8.8.8                               34ms     ✅  loss: 0.00%
+ICMP             185.143.234.200                       62ms     ✅  loss: 0.00%
+DNS/UDP          1.1.1.1:53                            62ms     ✅
+DNS/UDP          8.8.8.8:53                            66ms     ✅
+DNS/TCP          8.8.8.8:53                            111ms    ✅
+DNS/TCP          1.1.1.1:53                            118ms    ✅
+DNS/TLS (DoT)    1.1.1.1:853                           195ms    ✅
+DNS/QUIC (DoQ)   dns.adguard.com:8853                  2226ms   ✅
+DNS/HTTPS (DoH)  https://cloudflare-dns.com/dns-query  212ms    ✅
+TCP              arvancloud.ir:443                     46ms     ✅
+TCP              google.com:443                        49ms     ✅
+HTTP             http://example.com                    167ms    ✅  status: 200
+HTTP             http://httpforever.com                478ms    ✅  status: 200
+HTTPS            https://www.arvancloud.ir             250ms    ✅  status: 200
+HTTPS            https://www.google.com                554ms    ✅  status: 200
+TLS              www.arvancloud.ir:443                 191ms    ✅
+TLS              www.google.com:443                    200ms    ✅
+ECH              crypto.cloudflare.com:443             185ms    ✅  ech: accepted
+ECH              tls-ech.dev:443                       453ms    ✅  ech: accepted
+QUIC             cloudflare-quic.com:443               154ms    ✅
+QUIC             www.google.com:443                    170ms    ✅
+QUIC             digikala.ir:443                       -        ❌  timeout: no recent network activity
+WebSocket        wss://ws.postman-echo.com/raw         749ms    ✅
+STUN             stun.cloudflare.com:3478              69ms     ✅
+STUN             stun.l.google.com:19302               79ms     ✅
+NTP              time.cloudflare.com:123               88ms     ✅
+NTP              time.google.com:123                   111ms    ✅
 ```
 
 **JSON (`-json`):**
 ```bash
-./protoprobe -icmp -tcp -json
+./protoprobe -icmp -tcp -ech -json
 ```
 ```json
 {
@@ -207,6 +275,13 @@ WebSocket:
       "target": "arvancloud.ir:443",
       "success": false,
       "error": "dial tcp: connection refused"
+    },
+    {
+      "protocol": "ECH",
+      "target": "crypto.cloudflare.com:443",
+      "success": true,
+      "rtt_ms": 290,
+      "ech_accepted": true
     }
   ]
 }
@@ -219,4 +294,4 @@ WebSocket:
 - **ICMP** requires root privileges or `CAP_NET_RAW` on Linux. The test will fail with a permission error without them.
 - **`-tls-insecure`**, **`-dot-insecure`**, and **`-quic-insecure`** skip TLS certificate verification for their respective protocols. Useful when probing servers with self-signed certificates or in environments where the certificate chain is intercepted.
 - **HTTP and HTTPS** do not follow redirects — a `3xx` response is reported as-is so a redirect to a block page does not mask censorship.
-- Results within each protocol group run **concurrently**; protocol groups run sequentially in the order shown in the flags table above.
+- All protocol groups run **concurrently**; output is printed in the order shown in the flags table above so results are always easy to compare across runs.
